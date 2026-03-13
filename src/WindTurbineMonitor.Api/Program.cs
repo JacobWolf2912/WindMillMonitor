@@ -1,0 +1,115 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Mqtt.Controllers;
+using System.Text;
+using WindTurbineMonitor.Api.Data;
+using WindTurbineMonitor.Api.Services;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+builder.Services.AddOpenApi();
+
+// Add Entity Framework with SQL Server
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policyBuilder =>
+    {
+        policyBuilder.AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader();
+    });
+});
+
+// Add authentication services
+var jwtSecretKey = builder.Configuration["Jwt:SecretKey"] ?? "your-super-secret-key-change-this-in-production";
+var key = Encoding.ASCII.GetBytes(jwtSecretKey);
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(key),
+        ValidateIssuer = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "WindTurbineMonitor",
+        ValidateAudience = true,
+        ValidAudience = builder.Configuration["Jwt:Audience"] ?? "WindTurbineMonitorUsers",
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.Zero
+    };
+});
+
+builder.Services.AddAuthorization();
+builder.Services.AddScoped<IAuthService, AuthService>();
+
+// Add MQTT Controllers and services (only in production)
+if (!builder.Environment.IsDevelopment())
+{
+    builder.Services.AddMqttControllers();
+}
+builder.Services.AddSingleton<AlertEvaluationService>();
+
+// Add REST Controllers
+builder.Services.AddControllers();
+
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+}
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
+app.UseCors("AllowAll");
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+// Map REST controllers
+app.MapControllers();
+
+// Connect to MQTT broker in background (only if registered)
+if (!app.Environment.IsDevelopment())
+{
+    var mqttHost = app.Configuration["Mqtt:Host"] ?? "broker.hivemq.com";
+    var mqttPort = int.Parse(app.Configuration["Mqtt:Port"] ?? "1883");
+
+    var mqtt = app.Services.GetRequiredService<IMqttClientService>();
+    _ = Task.Run(async () =>
+    {
+        try
+        {
+            var connectTask = mqtt.ConnectAsync(mqttHost, mqttPort);
+            if (await Task.WhenAny(connectTask, Task.Delay(5000)) == connectTask)
+            {
+                await connectTask;
+                app.Logger.LogInformation("Connected to MQTT broker at {Host}:{Port}", mqttHost, mqttPort);
+            }
+            else
+            {
+                app.Logger.LogWarning("MQTT connection timeout - will retry");
+            }
+        }
+        catch (Exception ex)
+        {
+            app.Logger.LogWarning("Failed to connect to MQTT broker: {Error}", ex.Message);
+        }
+    });
+}
+
+await app.RunAsync();
