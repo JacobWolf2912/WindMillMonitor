@@ -20,12 +20,14 @@ jobs:
         node-version: '22'
 
     - name: Install dependencies
-      working-directory: ./src/WindTurbineMonitor.React
-      run: npm install
+      run: |
+        cd src/WindTurbineMonitor.React
+        npm install
 
     - name: Build
-      working-directory: ./src/WindTurbineMonitor.React
-      run: npm run build
+      run: |
+        cd src/WindTurbineMonitor.React
+        npm run build
 
     - name: Deploy to Azure App Service
       uses: azure/webapps-deploy@v2
