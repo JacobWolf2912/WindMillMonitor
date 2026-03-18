@@ -1,5 +1,5 @@
 // Determine API base URL based on environment
-const API_BASE = (() => {
+export const API_BASE = (() => {
   const hostname = window.location.hostname;
   const protocol = window.location.protocol;
 
