@@ -3,35 +3,29 @@ name: Deploy Frontend to Azure
 on:
   push:
     branches: [ main ]
-    paths:
-      - 'src/WindTurbineMonitor.React/**'
-      - '.github/workflows/deploy-frontend.yml'
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Setup Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: '22'
 
-    - name: Install dependencies
+    - name: Build and Deploy
+      shell: bash
       run: |
-        cd src/WindTurbineMonitor.React
+        cd $GITHUB_WORKSPACE/src/WindTurbineMonitor.React
         npm install
-
-    - name: Build
-      run: |
-        cd src/WindTurbineMonitor.React
         npm run build
 
-    - name: Deploy to Azure App Service
+    - name: Deploy to Azure
       uses: azure/webapps-deploy@v2
       with:
         app-name: windturbine-frontend
         publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE_FRONTEND }}
-        package: ./src/WindTurbineMonitor.React/dist
+        package: ${{ github.workspace }}/src/WindTurbineMonitor.React/dist
