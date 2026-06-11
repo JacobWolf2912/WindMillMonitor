@@ -13,12 +13,15 @@ public class TurbineMetricsController(
     AlertEvaluationService alertService,
     ILogger<TurbineMetricsController> logger) : MqttController
 {
-    [MqttRoute("fsiot/windturbines/{turbineId}/metrics")]
-    public async Task OnMetrics(string turbineId, MetricPayload payload)
+    private const string FarmId = "5e5789ff-d103-45f1-97bf-e8086254c02f";
+
+    [MqttRoute("farm/5e5789ff-d103-45f1-97bf-e8086254c02f/windmill/{turbineId}/telemetry")]
+    public async Task OnTelemetry(string turbineId, TelemetryPayload payload)
     {
         try
         {
-            if (!int.TryParse(turbineId, out var id))
+            var id = TurbineIdToNumber(turbineId);
+            if (id <= 0)
             {
                 logger.LogWarning("Received metric with invalid turbineId: {TurbineId}", turbineId);
                 return;
@@ -31,65 +34,66 @@ public class TurbineMetricsController(
             var turbine = await db.Turbines.FindAsync(id);
             if (turbine == null)
             {
-                turbine = AutoRegisterTurbine(id);
+                turbine = AutoRegisterTurbine(id, payload.TurbineName, payload.TurbineId);
                 db.Turbines.Add(turbine);
                 await db.SaveChangesAsync();
-                logger.LogInformation("Auto-registered new turbine: {TurbineId}", id);
+                logger.LogInformation("Auto-registered new turbine: {TurbineId} ({Name})", id, payload.TurbineName);
             }
 
-            // Persist metric
+            // Persist metric (map sea-fullstack fields to our schema)
             var metric = new TurbineMetric
             {
                 TurbineId = turbine.Id,
-                Timestamp = DateTime.UtcNow,
-                RotorRpm = payload.RotorRpm,
-                PowerOutputKw = payload.PowerOutputKw,
-                WindSpeedMs = payload.WindSpeedMs,
-                WindDirectionDeg = payload.WindDirectionDeg,
-                NacelleTemperatureCelsius = payload.NacelleTemperatureCelsius,
-                GearboxTemperatureCelsius = payload.GearboxTemperatureCelsius,
+                Timestamp = DateTime.Parse(payload.Timestamp),
+                RotorRpm = payload.RotorSpeed,
+                PowerOutputKw = payload.PowerOutput,
+                WindSpeedMs = payload.WindSpeed,
+                WindDirectionDeg = payload.WindDirection,
+                NacelleTemperatureCelsius = payload.AmbientTemperature,
+                GearboxTemperatureCelsius = payload.GearboxTemp,
                 Status = ParseStatus(payload.Status) ?? TurbineStatus.Online
             };
             db.TurbineMetrics.Add(metric);
-
-            // Evaluate thresholds → produce alerts
-            var alerts = alertService.Evaluate(turbine.Id, payload).ToList();
-            if (alerts.Count > 0)
-            {
-                db.Alerts.AddRange(alerts);
-                logger.LogWarning("Generated {AlertCount} alerts for turbine {TurbineId}",
-                    alerts.Count, turbine.Id);
-            }
-
             await db.SaveChangesAsync();
-            logger.LogDebug("Persisted metric for turbine {TurbineId}", turbine.Id);
+            logger.LogDebug("Persisted telemetry for turbine {TurbineId}", turbine.Id);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error processing metric for turbine {TurbineId}", turbineId);
+            logger.LogError(ex, "Error processing telemetry for turbine {TurbineId}", turbineId);
         }
     }
 
-    private static Turbine AutoRegisterTurbine(int turbineId)
+    private static int TurbineIdToNumber(string turbineId) => turbineId?.ToLower() switch
+    {
+        "turbine-alpha" => 1,
+        "turbine-beta" => 2,
+        "turbine-gamma" => 3,
+        "turbine-delta" => 4,
+        _ => 0
+    };
+
+    private static Turbine AutoRegisterTurbine(int turbineId, string turbineName, string mqttId)
     {
         return new Turbine
         {
             Id = turbineId,
-            Name = $"Turbine-{turbineId:D2}",
+            Name = turbineName,
             Location = "Offshore",
-            MqttTopicPrefix = $"fsiot/windturbines/{turbineId}",
+            MqttTopicPrefix = $"farm/{FarmId}/windmill/{mqttId}",
             InstalledAt = DateTime.UtcNow
         };
     }
 
     private static TurbineStatus? ParseStatus(string? status)
     {
-        return status switch
+        return status?.ToLower() switch
         {
-            "Online" => TurbineStatus.Online,
-            "Offline" => TurbineStatus.Offline,
-            "Fault" => TurbineStatus.Fault,
-            "Maintenance" => TurbineStatus.Maintenance,
+            "running" => TurbineStatus.Online,
+            "stopped" => TurbineStatus.Offline,
+            "online" => TurbineStatus.Online,
+            "offline" => TurbineStatus.Offline,
+            "fault" => TurbineStatus.Fault,
+            "maintenance" => TurbineStatus.Maintenance,
             _ => null
         };
     }

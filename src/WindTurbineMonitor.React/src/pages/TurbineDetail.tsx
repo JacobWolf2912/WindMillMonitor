@@ -43,54 +43,61 @@ export function TurbineDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="bg-blue-600 text-white p-6">
-        <button
-          onClick={() => navigate('/')}
-          className="text-blue-100 hover:text-white mb-4"
-        >
-          ← Back to Dashboard
-        </button>
-        <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-3xl font-bold">{turbine.name}</h1>
-            <p className="text-blue-100">{turbine.location}</p>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="bg-gradient-to-r from-blue-900 to-blue-800 text-white border-b-4 border-blue-600 shadow-lg">
+        <div className="container mx-auto px-6 py-8">
+          <button
+            onClick={() => navigate('/')}
+            className="text-blue-200 hover:text-white mb-6 font-medium flex items-center gap-2 transition-colors"
+          >
+            ← Back to Dashboard
+          </button>
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-4xl font-bold mb-2">{turbine.name}</h1>
+              <p className="text-blue-100 text-lg">{turbine.location}</p>
+            </div>
+            {displayMetric && <StatusBadge status={displayMetric.status} />}
           </div>
-          {displayMetric && <StatusBadge status={displayMetric.status} />}
         </div>
       </div>
 
-      <div className="container mx-auto p-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            {metrics && metrics.length > 0 ? (
-              <>
-                <MetricChart
-                  title="RPM & Power"
-                  data={metrics}
-                  dataKey="rotorRpm"
-                  unit="RPM"
-                />
-                <MetricChart
-                  title="Wind Metrics"
-                  data={metrics}
-                  dataKey="windSpeedMs"
-                  unit="m/s"
-                />
-                <MetricChart
-                  title="Temperature"
-                  data={metrics}
-                  dataKey="nacelleTemperatureCelsius"
-                  unit="°C"
-                />
-              </>
-            ) : (
-              <p className="text-gray-600">No historical metrics available.</p>
-            )}
+      <div className="container mx-auto px-6 py-10">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-8">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">Historical Data</h2>
+              {metrics && metrics.length > 0 ? (
+                <div className="space-y-6">
+                  <MetricChart
+                    title="RPM & Power"
+                    data={metrics}
+                    dataKey="rotorRpm"
+                    unit="RPM"
+                  />
+                  <MetricChart
+                    title="Wind Metrics"
+                    data={metrics}
+                    dataKey="windSpeedMs"
+                    unit="m/s"
+                  />
+                  <MetricChart
+                    title="Temperature"
+                    data={metrics}
+                    dataKey="nacelleTemperatureCelsius"
+                    unit="°C"
+                  />
+                </div>
+              ) : (
+                <div className="bg-white rounded-xl shadow-md border-l-4 border-gray-400 p-8">
+                  <p className="text-gray-600">No historical metrics available yet.</p>
+                </div>
+              )}
+            </div>
           </div>
 
-          <div className="space-y-6">
-            <div className="bg-white p-6 rounded-lg shadow">
+          <div className="space-y-8">
+            <div className="bg-white p-8 rounded-xl shadow-md border-t-4 border-blue-500">
               <h2 className="text-xl font-bold mb-4">Live Reading</h2>
               {displayMetric ? (
                 <div className="space-y-3">

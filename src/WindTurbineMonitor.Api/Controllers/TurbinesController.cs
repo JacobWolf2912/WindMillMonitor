@@ -2,12 +2,14 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WindTurbineMonitor.Api.Data;
 using WindTurbineMonitor.Api.Dtos;
+using WindTurbineMonitor.Api.Models;
+using WindTurbineMonitor.Api.Models.Enums;
 
 namespace WindTurbineMonitor.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class TurbinesController(AppDbContext db) : ControllerBase
+public class TurbinesController(AppDbContext db, IWebHostEnvironment env) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<TurbineDto>>> GetTurbines()
@@ -28,5 +30,39 @@ public class TurbinesController(AppDbContext db) : ControllerBase
             return NotFound();
 
         return Ok(new TurbineDto(turbine.Id, turbine.Name, turbine.Location, turbine.InstalledAt));
+    }
+
+    [HttpPost("seed-test-data")]
+    public async Task<ActionResult> SeedTestData()
+    {
+        if (!env.IsDevelopment())
+            return Forbid();
+
+        var turbine = new Turbine
+        {
+            Name = "Turbine 1",
+            Location = "North Farm",
+            MqttTopicPrefix = "fsiot/windturbines/1",
+            InstalledAt = DateTime.UtcNow.AddYears(-2)
+        };
+        db.Turbines.Add(turbine);
+        await db.SaveChangesAsync();
+
+        var metric = new TurbineMetric
+        {
+            TurbineId = turbine.Id,
+            Timestamp = DateTime.UtcNow,
+            RotorRpm = 28,
+            PowerOutputKw = 4500,
+            WindSpeedMs = 15.2,
+            WindDirectionDeg = 270,
+            NacelleTemperatureCelsius = 78,
+            GearboxTemperatureCelsius = 95,
+            Status = TurbineStatus.Online
+        };
+        db.TurbineMetrics.Add(metric);
+        await db.SaveChangesAsync();
+
+        return Ok(new { message = "Test data seeded successfully", turbineId = turbine.Id });
     }
 }

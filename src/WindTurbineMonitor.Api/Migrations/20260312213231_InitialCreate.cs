@@ -34,7 +34,7 @@ namespace WindTurbineMonitor.Api.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     TurbineId = table.Column<int>(type: "int", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
+                    Timestamp = table.Column<DateTime>(nullable: false),
                     Severity = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Title = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
                     Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
@@ -84,7 +84,7 @@ namespace WindTurbineMonitor.Api.Migrations
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     TurbineId = table.Column<int>(type: "int", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
+                    Timestamp = table.Column<DateTime>(nullable: false),
                     RotorRpm = table.Column<double>(type: "float", nullable: true),
                     PowerOutputKw = table.Column<double>(type: "float", nullable: true),
                     WindSpeedMs = table.Column<double>(type: "float", nullable: true),

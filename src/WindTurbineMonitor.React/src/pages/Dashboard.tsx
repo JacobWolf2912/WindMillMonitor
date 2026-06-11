@@ -3,28 +3,35 @@ import { useLatestMetric } from '../hooks/useMetrics';
 import { useAlerts } from '../hooks/useAlerts';
 import { TurbineCard } from '../components/TurbineCard';
 import { AlertPanel } from '../components/AlertPanel';
+import './Dashboard.css';
 
 export function Dashboard() {
   const { turbines, loading: turbinesLoading } = useTurbines();
   const { alerts, loading: alertsLoading, acknowledge } = useAlerts();
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <header className="bg-blue-600 text-white p-6">
-        <h1 className="text-3xl font-bold">🌬️ Wind Turbine Monitor</h1>
-        <p className="text-blue-100">FS+IoT Corporate™ - Windmill Inspection Centre</p>
+    <div className="dashboard-container">
+      <header className="dashboard-header">
+        <h1>💨 Wind Turbine Monitor</h1>
+        <p>Windmill Inspection Centre</p>
       </header>
 
-      <div className="container mx-auto p-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <h2 className="text-2xl font-bold mb-4">Turbines</h2>
+      <main className="dashboard-main">
+        <div className="dashboard-grid">
+          {/* Main turbines section */}
+          <div className="turbines-section">
+            <h2>Fleet Overview</h2>
+            <p className="section-description">Manage and monitor your wind turbines</p>
+
             {turbinesLoading ? (
-              <p className="text-gray-600">Loading turbines...</p>
+              <div className="loading-box">Loading turbines...</div>
             ) : turbines.length === 0 ? (
-              <p className="text-gray-600">No turbines available. Publish MQTT metrics to register turbines.</p>
+              <div className="empty-state">
+                <p>📡 No turbines connected</p>
+                <p>Publish MQTT metrics to <code>broker.hivemq.com</code> to register turbines.</p>
+              </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="turbines-grid">
                 {turbines.map((turbine) => (
                   <TurbineCardWithMetric key={turbine.id} turbineId={turbine.id} turbine={turbine} />
                 ))}
@@ -32,15 +39,19 @@ export function Dashboard() {
             )}
           </div>
 
-          <div>
+          {/* Alerts sidebar */}
+          <div className="alerts-section">
+            <h2>Alerts</h2>
+            <p className="section-description">System status and notifications</p>
+
             {alertsLoading ? (
-              <p className="text-gray-600">Loading alerts...</p>
+              <div className="loading-box">Loading alerts...</div>
             ) : (
               <AlertPanel alerts={alerts} onAcknowledge={acknowledge} />
             )}
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

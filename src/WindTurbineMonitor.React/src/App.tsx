@@ -5,6 +5,7 @@ import { Dashboard } from './pages/Dashboard';
 import { TurbineDetail } from './pages/TurbineDetail';
 import { LoginPage } from './pages/Login';
 import './index.css';
+import './App.css';
 
 interface ProtectedRouteProps {
   isLoggedIn: boolean;
@@ -28,17 +29,11 @@ function App() {
   }
 
   return (
-    <div key={refreshKey} className="min-h-screen bg-gray-100">
-      <nav className="bg-blue-900 text-white p-4 shadow">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Wind Turbine Monitor</h1>
-          <button
-            onClick={logout}
-            className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded"
-          >
-            Logout
-          </button>
-        </div>
+    <div key={refreshKey} className="app-wrapper">
+      <nav className="app-navbar">
+        <button onClick={logout} className="logout-btn">
+          Logout
+        </button>
       </nav>
 
       <BrowserRouter>

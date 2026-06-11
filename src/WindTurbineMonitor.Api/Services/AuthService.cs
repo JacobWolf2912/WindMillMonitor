@@ -8,6 +8,8 @@ namespace WindTurbineMonitor.Api.Services;
 public interface IAuthService
 {
     string GenerateToken(string username);
+    string HashPassword(string password);
+    bool VerifyPassword(string password, string hash);
 }
 
 public class AuthService : IAuthService
@@ -49,5 +51,22 @@ public class AuthService : IAuthService
         var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
         _logger.LogInformation("Generated token for user {Username}", username);
         return tokenString;
+    }
+
+    public string HashPassword(string password)
+    {
+        return BCrypt.Net.BCrypt.HashPassword(password, workFactor: 12);
+    }
+
+    public bool VerifyPassword(string password, string hash)
+    {
+        try
+        {
+            return BCrypt.Net.BCrypt.Verify(password, hash);
+        }
+        catch
+        {
+            return false;
+        }
     }
 }

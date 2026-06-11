@@ -17,7 +17,7 @@ export function useAuth() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const login = useCallback(async (username: string) => {
+  const login = useCallback(async (username: string, password: string) => {
     try {
       setIsLoading(true);
       setError(null);
@@ -25,7 +25,7 @@ export function useAuth() {
       const response = await fetch(`${API_BASE}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username }),
+        body: JSON.stringify({ username, password }),
       });
 
       if (!response.ok) {
@@ -38,6 +38,9 @@ export function useAuth() {
       localStorage.setItem('username', data.username);
       setIsLoggedIn(true);
       setUsername(data.username);
+
+      // Reload page to ensure App component sees updated auth state
+      window.location.reload();
 
       return data;
     } catch (err) {
