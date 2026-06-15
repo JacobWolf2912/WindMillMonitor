@@ -100,36 +100,33 @@ app.UseAuthorization();
 app.MapControllers();
 
 // Connect to MQTT broker before starting hosted services
-if (!app.Environment.IsDevelopment() || true)
-{
-    var mqttHost = app.Configuration["Mqtt:Host"] ?? "broker.hivemq.com";
-    var mqttPort = int.Parse(app.Configuration["Mqtt:Port"] ?? "1883");
+var mqttHost = app.Configuration["Mqtt:Host"] ?? "broker.hivemq.com";
+var mqttPort = int.Parse(app.Configuration["Mqtt:Port"] ?? "1883");
 
-    var mqtt = app.Services.GetService<IMqttClientService>();
-    if (mqtt != null)
+var mqtt = app.Services.GetService<IMqttClientService>();
+if (mqtt != null)
+{
+    try
     {
-        try
+        var connectTask = mqtt.ConnectAsync(mqttHost, mqttPort);
+        if (await Task.WhenAny(connectTask, Task.Delay(10000)) == connectTask)
         {
-            var connectTask = mqtt.ConnectAsync(mqttHost, mqttPort);
-            if (await Task.WhenAny(connectTask, Task.Delay(10000)) == connectTask)
-            {
-                await connectTask;
-                app.Logger.LogInformation("Connected to MQTT broker at {Host}:{Port}", mqttHost, mqttPort);
-            }
-            else
-            {
-                app.Logger.LogWarning("MQTT connection timeout - hosted service will retry on startup");
-            }
+            await connectTask;
+            app.Logger.LogInformation("Connected to MQTT broker at {Host}:{Port}", mqttHost, mqttPort);
         }
-        catch (Exception ex)
+        else
         {
-            app.Logger.LogWarning("Failed to connect to MQTT broker: {Error}", ex.Message);
+            app.Logger.LogWarning("MQTT connection timeout - hosted service will retry on startup");
         }
     }
-    else
+    catch (Exception ex)
     {
-        app.Logger.LogWarning("MQTT service not registered");
+        app.Logger.LogWarning("Failed to connect to MQTT broker: {Error}", ex.Message);
     }
+}
+else
+{
+    app.Logger.LogWarning("MQTT service not registered");
 }
 
 await app.RunAsync();
