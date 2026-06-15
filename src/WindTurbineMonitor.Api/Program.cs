@@ -102,7 +102,7 @@ app.UseAuthorization();
 // Map REST controllers
 app.MapControllers();
 
-// Connect to MQTT broker in background (only if registered)
+// Connect to MQTT broker before starting hosted services
 if (!app.Environment.IsDevelopment())
 {
     var mqttHost = app.Configuration["Mqtt:Host"] ?? "broker.hivemq.com";
@@ -111,26 +111,23 @@ if (!app.Environment.IsDevelopment())
     var mqtt = app.Services.GetService<IMqttClientService>();
     if (mqtt != null)
     {
-        _ = Task.Run(async () =>
+        try
         {
-            try
+            var connectTask = mqtt.ConnectAsync(mqttHost, mqttPort);
+            if (await Task.WhenAny(connectTask, Task.Delay(10000)) == connectTask)
             {
-                var connectTask = mqtt.ConnectAsync(mqttHost, mqttPort);
-                if (await Task.WhenAny(connectTask, Task.Delay(5000)) == connectTask)
-                {
-                    await connectTask;
-                    app.Logger.LogInformation("Connected to MQTT broker at {Host}:{Port}", mqttHost, mqttPort);
-                }
-                else
-                {
-                    app.Logger.LogWarning("MQTT connection timeout - will retry");
-                }
+                await connectTask;
+                app.Logger.LogInformation("Connected to MQTT broker at {Host}:{Port}", mqttHost, mqttPort);
             }
-            catch (Exception ex)
+            else
             {
-                app.Logger.LogWarning("Failed to connect to MQTT broker: {Error}", ex.Message);
+                app.Logger.LogWarning("MQTT connection timeout - hosted service will retry on startup");
             }
-        });
+        }
+        catch (Exception ex)
+        {
+            app.Logger.LogWarning("Failed to connect to MQTT broker: {Error}", ex.Message);
+        }
     }
     else
     {
