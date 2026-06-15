@@ -11,17 +11,17 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddOpenApi();
 
-// Add Entity Framework with SQL Server (dev) or SQLite (production)
+// Add Entity Framework with SQLite (dev) or SQL Server (production)
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
     if (builder.Environment.IsProduction())
     {
-        options.UseSqlite(connectionString);
+        options.UseSqlServer(connectionString);
     }
     else
     {
-        options.UseSqlServer(connectionString);
+        options.UseSqlite(connectionString);
     }
 });
 
