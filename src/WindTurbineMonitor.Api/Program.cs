@@ -15,14 +15,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-    if (builder.Environment.IsProduction())
-    {
-        options.UseSqlServer(connectionString);
-    }
-    else
-    {
-        options.UseSqlite(connectionString);
-    }
+    options.UseSqlServer(connectionString);
 });
 
 builder.Services.AddCors(options =>
