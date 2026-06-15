@@ -104,16 +104,15 @@ app.UseAuthorization();
 app.MapControllers();
 
 // Fallback for SPA routing - serve index.html for non-API routes
-app.MapFallback(context =>
+app.MapFallback(async context =>
 {
     if (!context.Request.Path.StartsWithSegments("/api"))
     {
-        context.Request.Path = "/index.html";
+        var env = app.Services.GetRequiredService<IWebHostEnvironment>();
+        var filePath = Path.Combine(env.WebRootPath, "index.html");
+        context.Response.ContentType = "text/html";
+        await context.Response.SendFileAsync(filePath);
     }
-    return app.Services.GetRequiredService<IWebHostEnvironment>()
-        .WebRootFileProvider
-        .GetFileInfo(context.Request.Path)
-        .Exists ? Task.CompletedTask : context.Response.WriteAsync("Not found");
 });
 
 // Connect to MQTT broker before starting hosted services
