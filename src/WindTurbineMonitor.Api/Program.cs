@@ -55,11 +55,8 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
-// Add MQTT Controllers and services (only in production)
-if (!builder.Environment.IsDevelopment())
-{
-    builder.Services.AddMqttControllers();
-}
+// Add MQTT Controllers and services
+builder.Services.AddMqttControllers();
 builder.Services.AddSingleton<AlertEvaluationService>();
 
 // Add REST Controllers
@@ -103,7 +100,7 @@ app.UseAuthorization();
 app.MapControllers();
 
 // Connect to MQTT broker before starting hosted services
-if (!app.Environment.IsDevelopment())
+if (!app.Environment.IsDevelopment() || true)
 {
     var mqttHost = app.Configuration["Mqtt:Host"] ?? "broker.hivemq.com";
     var mqttPort = int.Parse(app.Configuration["Mqtt:Port"] ?? "1883");
