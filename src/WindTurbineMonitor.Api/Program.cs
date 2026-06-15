@@ -91,6 +91,10 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
 }
+
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
 app.UseCors("AllowAll");
 
 app.UseAuthentication();
@@ -98,6 +102,19 @@ app.UseAuthorization();
 
 // Map REST controllers
 app.MapControllers();
+
+// Fallback for SPA routing - serve index.html for non-API routes
+app.MapFallback(context =>
+{
+    if (!context.Request.Path.StartsWithSegments("/api"))
+    {
+        context.Request.Path = "/index.html";
+    }
+    return app.Services.GetRequiredService<IWebHostEnvironment>()
+        .WebRootFileProvider
+        .GetFileInfo(context.Request.Path)
+        .Exists ? Task.CompletedTask : context.Response.WriteAsync("Not found");
+});
 
 // Connect to MQTT broker before starting hosted services
 var mqttHost = app.Configuration["Mqtt:Host"] ?? "broker.hivemq.com";
