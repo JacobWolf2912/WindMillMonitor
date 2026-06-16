@@ -8,13 +8,8 @@ export const API_BASE = (() => {
     return 'http://localhost:5021';
   }
 
-  // On Azure, construct the API URL
-  if (hostname.includes('azurewebsites.net')) {
-    return `${protocol}//windturbine-api.azurewebsites.net`;
-  }
-
-  // Default fallback
-  return `${protocol}//${hostname}:5021`;
+  // On production (same domain), use current hostname
+  return `${protocol}//${hostname}`;
 })();
 
 function getHeaders(): Record<string, string> {
