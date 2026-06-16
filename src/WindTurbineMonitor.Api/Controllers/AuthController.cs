@@ -21,7 +21,6 @@ public class AuthController(IAuthService authService, AppDbContext db, ILogger<A
 
         var testUser = new User
         {
-            Id = Guid.NewGuid(),
             Username = "testuser",
             PasswordHash = authService.HashPassword("password123"),
             CreatedAt = DateTime.UtcNow
