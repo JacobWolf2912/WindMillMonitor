@@ -9,6 +9,30 @@ namespace WindTurbineMonitor.Api.Controllers;
 [Route("api/[controller]")]
 public class AuthController(IAuthService authService, AppDbContext db, ILogger<AuthController> logger) : ControllerBase
 {
+    [HttpPost("seed-testuser")]
+    public async Task<ActionResult<string>> SeedTestUser()
+    {
+        var existingUser = await db.Users.FirstOrDefaultAsync(u => u.Username == "testuser");
+        if (existingUser != null)
+        {
+            return Ok("Test user already exists");
+        }
+
+        var testUser = new User
+        {
+            Id = Guid.NewGuid(),
+            Username = "testuser",
+            PasswordHash = authService.HashPassword("password123"),
+            CreatedAt = DateTime.UtcNow
+        };
+
+        db.Users.Add(testUser);
+        await db.SaveChangesAsync();
+        logger.LogInformation("Test user created");
+
+        return Ok("Test user created successfully");
+    }
+
     [HttpPost("login")]
     public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequest request)
     {
