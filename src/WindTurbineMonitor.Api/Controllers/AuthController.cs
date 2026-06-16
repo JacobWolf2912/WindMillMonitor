@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WindTurbineMonitor.Api.Data;
+using WindTurbineMonitor.Api.Models;
 using WindTurbineMonitor.Api.Services;
 
 namespace WindTurbineMonitor.Api.Controllers;
