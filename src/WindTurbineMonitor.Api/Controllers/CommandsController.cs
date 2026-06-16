@@ -18,7 +18,7 @@ public class CommandsController(AppDbContext db, IMqttClientService mqtt, ILogge
 {
     [HttpPost]
     public async Task<ActionResult<CommandLogDto>> IssueCommand(
-        int turbineId,
+        string turbineId,
         [FromBody] IssueCommandRequest request)
     {
         // Validate turbine exists
@@ -75,7 +75,7 @@ public class CommandsController(AppDbContext db, IMqttClientService mqtt, ILogge
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<CommandLogDto>>> GetCommands(
-        int turbineId,
+        string turbineId,
         [FromQuery] int limit = 50)
     {
         var commands = await db.CommandLogs

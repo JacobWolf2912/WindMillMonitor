@@ -11,7 +11,7 @@ namespace WindTurbineMonitor.Api.Controllers;
 public class SseController(AppDbContext db) : ControllerBase
 {
     [HttpGet("turbines/{turbineId}")]
-    public async Task StreamTurbineMetrics(int turbineId)
+    public async Task StreamTurbineMetrics(string turbineId)
     {
         Response.ContentType = "text/event-stream";
         Response.Headers.Append("Cache-Control", "no-cache");
@@ -64,7 +64,7 @@ public class SseController(AppDbContext db) : ControllerBase
         await Response.Body.FlushAsync();
     }
 
-    private async Task<MetricDto?> GetLatestMetricForTurbine(int turbineId)
+    private async Task<MetricDto?> GetLatestMetricForTurbine(string turbineId)
     {
         var metric = await db.TurbineMetrics
             .Where(m => m.TurbineId == turbineId)

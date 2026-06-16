@@ -2,7 +2,7 @@ namespace WindTurbineMonitor.Api.Models;
 
 public class Turbine
 {
-    public int Id { get; set; }
+    public required string Id { get; set; }
 
     public required string Name { get; set; }
 

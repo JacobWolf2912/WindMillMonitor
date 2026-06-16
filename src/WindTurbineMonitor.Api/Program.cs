@@ -69,14 +69,18 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
     try
     {
         db.Database.Migrate();
         app.Logger.LogInformation("Database migrated successfully");
+
+        // Seed initial data (turbines and test user)
+        await DatabaseInitializer.SeedInitialDataAsync(db, app.Logger, authService);
     }
     catch (Exception ex)
     {
-        app.Logger.LogError(ex, "Failed to migrate database");
+        app.Logger.LogError(ex, "Failed to initialize database");
         throw;
     }
 }

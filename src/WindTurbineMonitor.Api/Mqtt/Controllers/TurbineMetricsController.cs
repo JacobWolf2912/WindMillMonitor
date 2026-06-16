@@ -10,7 +10,6 @@ namespace WindTurbineMonitor.Api.Mqtt.Controllers;
 
 public class TurbineMetricsController(
     IServiceScopeFactory scopeFactory,
-    AlertEvaluationService alertService,
     ILogger<TurbineMetricsController> logger) : MqttController
 {
     private const string FarmId = "5e5789ff-d103-45f1-97bf-e8086254c02f";
@@ -20,24 +19,16 @@ public class TurbineMetricsController(
     {
         try
         {
-            var id = TurbineIdToNumber(turbineId);
-            if (id <= 0)
-            {
-                logger.LogWarning("Received metric with invalid turbineId: {TurbineId}", turbineId);
-                return;
-            }
-
             using var scope = scopeFactory.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-            // Resolve or auto-register the turbine
-            var turbine = await db.Turbines.FindAsync(id);
+            // Look up turbine by ID
+            var turbine = await db.Turbines.FindAsync(turbineId);
+
             if (turbine == null)
             {
-                turbine = AutoRegisterTurbine(id, payload.TurbineName, payload.TurbineId);
-                db.Turbines.Add(turbine);
-                await db.SaveChangesAsync();
-                logger.LogInformation("Auto-registered new turbine: {TurbineId} ({Name})", id, payload.TurbineName);
+                logger.LogWarning("Received telemetry for unknown turbine: {TurbineId}", turbineId);
+                return;
             }
 
             // Persist metric (map sea-fullstack fields to our schema)
@@ -55,7 +46,7 @@ public class TurbineMetricsController(
             };
             db.TurbineMetrics.Add(metric);
             await db.SaveChangesAsync();
-            logger.LogDebug("Persisted telemetry for turbine {TurbineId}", turbine.Id);
+            logger.LogInformation("Persisted telemetry from {TurbineName}", turbine.Name);
         }
         catch (Exception ex)
         {
@@ -63,26 +54,6 @@ public class TurbineMetricsController(
         }
     }
 
-    private static int TurbineIdToNumber(string turbineId) => turbineId?.ToLower() switch
-    {
-        "turbine-alpha" => 1,
-        "turbine-beta" => 2,
-        "turbine-gamma" => 3,
-        "turbine-delta" => 4,
-        _ => 0
-    };
-
-    private static Turbine AutoRegisterTurbine(int turbineId, string turbineName, string mqttId)
-    {
-        return new Turbine
-        {
-            Id = turbineId,
-            Name = turbineName,
-            Location = "Offshore",
-            MqttTopicPrefix = $"farm/{FarmId}/windmill/{mqttId}",
-            InstalledAt = DateTime.UtcNow
-        };
-    }
 
     private static TurbineStatus? ParseStatus(string? status)
     {

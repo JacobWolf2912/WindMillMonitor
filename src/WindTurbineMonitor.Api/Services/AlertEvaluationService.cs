@@ -9,7 +9,7 @@ public class AlertEvaluationService
     /// <summary>
     /// Evaluates a metric payload against threshold rules and returns alert records for violations.
     /// </summary>
-    public IEnumerable<Alert> Evaluate(int turbineId, MetricPayload payload)
+    public IEnumerable<Alert> Evaluate(string turbineId, MetricPayload payload)
     {
         var alerts = new List<Alert>();
 
@@ -92,7 +92,7 @@ public class AlertEvaluationService
         return alerts;
     }
 
-    private static Alert CreateAlert(int turbineId, AlertSeverity severity, string title, string description)
+    private static Alert CreateAlert(string turbineId, AlertSeverity severity, string title, string description)
     {
         return new Alert
         {

@@ -11,14 +11,14 @@ public class AlertsController(AppDbContext db) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<AlertDto>>> GetAlerts(
-        [FromQuery] int? turbineId,
+        [FromQuery] string? turbineId,
         [FromQuery] bool unacknowledgedOnly = false,
         [FromQuery] int limit = 50)
     {
         var query = db.Alerts.AsQueryable();
 
-        if (turbineId.HasValue)
-            query = query.Where(a => a.TurbineId == turbineId.Value);
+        if (!string.IsNullOrEmpty(turbineId))
+            query = query.Where(a => a.TurbineId == turbineId);
 
         if (unacknowledgedOnly)
             query = query.Where(a => !a.IsAcknowledged);

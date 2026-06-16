@@ -11,7 +11,7 @@ public class MetricsController(AppDbContext db) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<MetricDto>>> GetMetrics(
-        int turbineId,
+        string turbineId,
         [FromQuery] DateTime? from,
         [FromQuery] DateTime? to,
         [FromQuery] int limit = 100)
@@ -40,7 +40,7 @@ public class MetricsController(AppDbContext db) : ControllerBase
     }
 
     [HttpGet("latest")]
-    public async Task<ActionResult<MetricDto>> GetLatestMetric(int turbineId)
+    public async Task<ActionResult<MetricDto>> GetLatestMetric(string turbineId)
     {
         var metric = await db.TurbineMetrics
             .Where(m => m.TurbineId == turbineId)

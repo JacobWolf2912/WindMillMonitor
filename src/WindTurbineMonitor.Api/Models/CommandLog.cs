@@ -6,7 +6,7 @@ public class CommandLog
 {
     public long Id { get; set; }
 
-    public int TurbineId { get; set; }
+    public required string TurbineId { get; set; }
 
     public required string IssuedByUsername { get; set; }
 

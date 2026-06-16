@@ -6,7 +6,7 @@ public class TurbineMetric
 {
     public long Id { get; set; }
 
-    public int TurbineId { get; set; }
+    public required string TurbineId { get; set; }
 
     public DateTime Timestamp { get; set; }
 

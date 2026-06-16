@@ -2,7 +2,7 @@ namespace WindTurbineMonitor.Api.Dtos;
 
 public record MetricDto(
     long Id,
-    int TurbineId,
+    string TurbineId,
     DateTime Timestamp,
     double? RotorRpm,
     double? PowerOutputKw,

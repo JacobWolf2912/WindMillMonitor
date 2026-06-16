@@ -23,7 +23,7 @@ public class TurbinesController(AppDbContext db, IWebHostEnvironment env) : Cont
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<TurbineDto>> GetTurbine(int id)
+    public async Task<ActionResult<TurbineDto>> GetTurbine(string id)
     {
         var turbine = await db.Turbines.FindAsync(id);
         if (turbine == null)
@@ -40,6 +40,7 @@ public class TurbinesController(AppDbContext db, IWebHostEnvironment env) : Cont
 
         var turbine = new Turbine
         {
+            Id = "turbine-test",
             Name = "Turbine 1",
             Location = "North Farm",
             MqttTopicPrefix = "fsiot/windturbines/1",
