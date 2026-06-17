@@ -56,7 +56,7 @@ export function Dashboard() {
   );
 }
 
-function TurbineCardWithMetric({ turbineId, turbine }: { turbineId: number; turbine: any }) {
+function TurbineCardWithMetric({ turbineId, turbine }: { turbineId: string; turbine: any }) {
   const { metric } = useLatestMetric(turbineId);
   return <TurbineCard turbine={turbine} metric={metric || null} />;
 }

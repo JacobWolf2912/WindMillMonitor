@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { get, post } from '../api/client';
 import type { CommandLog } from '../types/command';
 
-export function useCommands(turbineId: number) {
+export function useCommands(turbineId: string) {
   const [commands, setCommands] = useState<CommandLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import type { Alert } from '../types/alert';
 import { get, patch } from '../api/client';
 
-export function useAlerts(turbineId?: number) {
+export function useAlerts(turbineId?: string) {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

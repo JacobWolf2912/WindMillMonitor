@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import type { Metric } from '../types/metric';
 import { get } from '../api/client';
 
-export function useMetrics(turbineId: number, limit = 100) {
+export function useMetrics(turbineId: string, limit = 100) {
   const [metrics, setMetrics] = useState<Metric[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -17,7 +17,7 @@ export function useMetrics(turbineId: number, limit = 100) {
   return { metrics, loading, error };
 }
 
-export function useLatestMetric(turbineId: number) {
+export function useLatestMetric(turbineId: string) {
   const [metric, setMetric] = useState<Metric | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
