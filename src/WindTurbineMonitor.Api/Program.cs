@@ -56,15 +56,48 @@ builder.Services.AddAuthorization();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
 // Add MQTT Controllers and services
-// Temporarily disabled to allow API to start without MQTT broker connection
-// builder.Services.AddMqttControllers();
+builder.Services.AddMqttControllers();
 builder.Services.AddSingleton<AlertEvaluationService>();
+builder.Services.AddSingleton<MetricBroadcaster>();
+builder.Services.AddSingleton<AlertBroadcaster>();
 
 // Add REST Controllers
 builder.Services.AddControllers();
 
 
 var app = builder.Build();
+
+// Connect to MQTT broker with retry logic
+bool mqttConnected = false;
+int retries = 0;
+int maxRetries = 5;
+
+while (!mqttConnected && retries < maxRetries)
+{
+    try
+    {
+        var mqtt = app.Services.GetRequiredService<IMqttClientService>();
+        app.Logger.LogInformation("Attempting MQTT connection (attempt {Attempt}/{MaxAttempts})", retries + 1, maxRetries);
+        await mqtt.ConnectAsync("broker.hivemq.com", 1883);
+        app.Logger.LogInformation("Connected to MQTT broker at broker.hivemq.com:1883");
+        mqttConnected = true;
+    }
+    catch (Exception ex)
+    {
+        retries++;
+        if (retries < maxRetries)
+        {
+            int delayMs = 3000 * retries; // Increase delay: 3s, 6s, 9s, 12s, 15s
+            app.Logger.LogWarning(ex, "MQTT connection failed. Retrying in {DelaySeconds} seconds... (attempt {Attempt}/{MaxAttempts})",
+                delayMs / 1000, retries + 1, maxRetries);
+            await Task.Delay(delayMs);
+        }
+        else
+        {
+            app.Logger.LogError(ex, "Failed to connect to MQTT broker after {MaxRetries} attempts. Continuing without MQTT...", maxRetries);
+        }
+    }
+}
 
 // Initialize database
 using (var scope = app.Services.CreateScope())

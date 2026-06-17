@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTurbines } from '../hooks/useTurbines';
 import { useMetrics, useLatestMetric } from '../hooks/useMetrics';
@@ -15,18 +15,34 @@ export function TurbineDetail() {
   const navigate = useNavigate();
   const turbineId = id || '';
 
+  console.log('TurbineDetail - id from params:', id, 'turbineId:', turbineId);
+
   const { turbines } = useTurbines();
   const { metrics } = useMetrics(turbineId);
   const { metric: latestMetric } = useLatestMetric(turbineId);
   const { alerts, acknowledge } = useAlerts(turbineId);
   const [liveMetric, setLiveMetric] = useState<Metric | null>(latestMetric || null);
+  const lastUpdateRef = useRef<number>(0);
 
-  useSse<Metric>(`/sse/turbines/${turbineId}`, (data) => {
-    setLiveMetric(data);
-  });
+  const handleSseUpdate = useCallback((data: Metric) => {
+    const now = Date.now();
+    if (now - lastUpdateRef.current >= 15000) {
+      setLiveMetric(data);
+      lastUpdateRef.current = now;
+    }
+  }, []);
+
+  useSse<Metric>(`/sse/turbines/${turbineId}`, handleSseUpdate);
 
   const turbine = turbines.find((t) => t.id === turbineId);
   const displayMetric = liveMetric || latestMetric;
+  const chartData = liveMetric && metrics
+    ? [liveMetric, ...metrics.filter(m => m.timestamp !== liveMetric.timestamp)]
+    : metrics;
+
+  useEffect(() => {
+    console.log('Chart data:', { liveMetric, metricsLength: metrics?.length, chartDataLength: chartData?.length });
+  }, [chartData, liveMetric, metrics]);
 
   if (!turbine) {
     return (
@@ -75,7 +91,7 @@ export function TurbineDetail() {
                     <div className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
                       <MetricChart
                         title="RPM & Power"
-                        data={metrics}
+                        data={chartData}
                         dataKey="rotorRpm"
                         unit="RPM"
                       />
@@ -83,16 +99,16 @@ export function TurbineDetail() {
                     <div className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
                       <MetricChart
                         title="Wind Metrics"
-                        data={metrics}
+                        data={chartData}
                         dataKey="windSpeedMs"
                         unit="m/s"
                       />
                     </div>
                     <div className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
                       <MetricChart
-                        title="Temperature"
-                        data={metrics}
-                        dataKey="nacelleTemperatureCelsius"
+                        title="Generator Temperature"
+                        data={chartData}
+                        dataKey="generatorTemperatureCelsius"
                         unit="°C"
                       />
                     </div>

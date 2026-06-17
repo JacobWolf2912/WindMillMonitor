@@ -47,7 +47,7 @@ public static class DatabaseInitializer
                 {
                     Id = "turbine-beta",
                     Name = "Beta",
-                    Location = "North Platform",
+                    Location = "South Platform",
                     MqttTopicPrefix = $"farm/{FarmId}/windmill/turbine-beta",
                     InstalledAt = DateTime.UtcNow.AddYears(-2)
                 },
@@ -55,7 +55,7 @@ public static class DatabaseInitializer
                 {
                     Id = "turbine-gamma",
                     Name = "Gamma",
-                    Location = "South Platform",
+                    Location = "East Platform",
                     MqttTopicPrefix = $"farm/{FarmId}/windmill/turbine-gamma",
                     InstalledAt = DateTime.UtcNow.AddYears(-2)
                 },

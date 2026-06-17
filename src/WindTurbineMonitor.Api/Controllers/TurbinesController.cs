@@ -57,8 +57,12 @@ public class TurbinesController(AppDbContext db, IWebHostEnvironment env) : Cont
             PowerOutputKw = 4500,
             WindSpeedMs = 15.2,
             WindDirectionDeg = 270,
-            NacelleTemperatureCelsius = 78,
+            AmbientTemperatureCelsius = 15,
+            NacelleDirectionDeg = 90,
+            BladePitchDeg = 5,
+            GeneratorTemperatureCelsius = 78,
             GearboxTemperatureCelsius = 95,
+            VibrationMs2 = 0.5,
             Status = TurbineStatus.Online
         };
         db.TurbineMetrics.Add(metric);

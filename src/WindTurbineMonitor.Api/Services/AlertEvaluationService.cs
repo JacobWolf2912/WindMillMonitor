@@ -9,75 +9,75 @@ public class AlertEvaluationService
     /// <summary>
     /// Evaluates a metric payload against threshold rules and returns alert records for violations.
     /// </summary>
-    public IEnumerable<Alert> Evaluate(string turbineId, MetricPayload payload)
+    public IEnumerable<Alert> Evaluate(string turbineId, TelemetryPayload payload)
     {
         var alerts = new List<Alert>();
 
         // RPM thresholds
-        if (payload.RotorRpm.HasValue)
+        if (payload.RotorSpeed > 0)
         {
-            if (payload.RotorRpm > 35)
+            if (payload.RotorSpeed > 35)
             {
                 alerts.Add(CreateAlert(turbineId, AlertSeverity.Critical,
                     "Critical RPM",
-                    $"Rotor RPM exceeds critical threshold: {payload.RotorRpm} RPM"));
+                    $"Rotor RPM exceeds critical threshold: {payload.RotorSpeed} RPM"));
             }
-            else if (payload.RotorRpm > 30)
+            else if (payload.RotorSpeed > 30)
             {
                 alerts.Add(CreateAlert(turbineId, AlertSeverity.Warning,
                     "Warning RPM",
-                    $"Rotor RPM exceeds warning threshold: {payload.RotorRpm} RPM"));
+                    $"Rotor RPM exceeds warning threshold: {payload.RotorSpeed} RPM"));
             }
         }
 
-        // Nacelle temperature thresholds
-        if (payload.NacelleTemperatureCelsius.HasValue)
+        // Generator temperature thresholds
+        if (payload.GeneratorTemp > 0)
         {
-            if (payload.NacelleTemperatureCelsius > 90)
+            if (payload.GeneratorTemp > 90)
             {
                 alerts.Add(CreateAlert(turbineId, AlertSeverity.Critical,
-                    "Critical Nacelle Temperature",
-                    $"Nacelle temperature exceeds critical threshold: {payload.NacelleTemperatureCelsius} °C"));
+                    "Critical Generator Temperature",
+                    $"Generator temperature exceeds critical threshold: {payload.GeneratorTemp} °C"));
             }
-            else if (payload.NacelleTemperatureCelsius > 80)
+            else if (payload.GeneratorTemp > 80)
             {
                 alerts.Add(CreateAlert(turbineId, AlertSeverity.Warning,
-                    "Warning Nacelle Temperature",
-                    $"Nacelle temperature exceeds warning threshold: {payload.NacelleTemperatureCelsius} °C"));
+                    "Warning Generator Temperature",
+                    $"Generator temperature exceeds warning threshold: {payload.GeneratorTemp} °C"));
             }
         }
 
         // Gearbox temperature thresholds
-        if (payload.GearboxTemperatureCelsius.HasValue)
+        if (payload.GearboxTemp > 0)
         {
-            if (payload.GearboxTemperatureCelsius > 120)
+            if (payload.GearboxTemp > 120)
             {
                 alerts.Add(CreateAlert(turbineId, AlertSeverity.Critical,
                     "Critical Gearbox Temperature",
-                    $"Gearbox temperature exceeds critical threshold: {payload.GearboxTemperatureCelsius} °C"));
+                    $"Gearbox temperature exceeds critical threshold: {payload.GearboxTemp} °C"));
             }
-            else if (payload.GearboxTemperatureCelsius > 100)
+            else if (payload.GearboxTemp > 100)
             {
                 alerts.Add(CreateAlert(turbineId, AlertSeverity.Warning,
                     "Warning Gearbox Temperature",
-                    $"Gearbox temperature exceeds warning threshold: {payload.GearboxTemperatureCelsius} °C"));
+                    $"Gearbox temperature exceeds warning threshold: {payload.GearboxTemp} °C"));
             }
         }
 
         // Wind speed thresholds
-        if (payload.WindSpeedMs.HasValue)
+        if (payload.WindSpeed > 0)
         {
-            if (payload.WindSpeedMs > 30)
+            if (payload.WindSpeed > 30)
             {
                 alerts.Add(CreateAlert(turbineId, AlertSeverity.Critical,
                     "Extreme Wind Speed",
-                    $"Wind speed exceeds critical threshold: {payload.WindSpeedMs} m/s"));
+                    $"Wind speed exceeds critical threshold: {payload.WindSpeed} m/s"));
             }
-            else if (payload.WindSpeedMs > 25)
+            else if (payload.WindSpeed > 25)
             {
                 alerts.Add(CreateAlert(turbineId, AlertSeverity.Warning,
                     "High Wind Speed",
-                    $"Wind speed exceeds warning threshold: {payload.WindSpeedMs} m/s"));
+                    $"Wind speed exceeds warning threshold: {payload.WindSpeed} m/s"));
             }
         }
 

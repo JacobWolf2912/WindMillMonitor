@@ -32,7 +32,8 @@ public class MetricsController(AppDbContext db) : ControllerBase
                 m.Id, m.TurbineId, m.Timestamp,
                 m.RotorRpm, m.PowerOutputKw,
                 m.WindSpeedMs, m.WindDirectionDeg,
-                m.NacelleTemperatureCelsius, m.GearboxTemperatureCelsius,
+                m.AmbientTemperatureCelsius, m.NacelleDirectionDeg, m.BladePitchDeg,
+                m.GeneratorTemperatureCelsius, m.GearboxTemperatureCelsius, m.VibrationMs2,
                 m.Status.ToString()))
             .ToListAsync();
 
@@ -54,7 +55,8 @@ public class MetricsController(AppDbContext db) : ControllerBase
             metric.Id, metric.TurbineId, metric.Timestamp,
             metric.RotorRpm, metric.PowerOutputKw,
             metric.WindSpeedMs, metric.WindDirectionDeg,
-            metric.NacelleTemperatureCelsius, metric.GearboxTemperatureCelsius,
+            metric.AmbientTemperatureCelsius, metric.NacelleDirectionDeg, metric.BladePitchDeg,
+            metric.GeneratorTemperatureCelsius, metric.GearboxTemperatureCelsius, metric.VibrationMs2,
             metric.Status.ToString());
 
         return Ok(dto);

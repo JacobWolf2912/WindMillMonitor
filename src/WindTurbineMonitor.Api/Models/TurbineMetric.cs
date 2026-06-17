@@ -20,10 +20,18 @@ public class TurbineMetric
 
     public double? WindDirectionDeg { get; set; }
 
+    public double? AmbientTemperatureCelsius { get; set; }
+
+    public double? NacelleDirectionDeg { get; set; }
+
+    public double? BladePitchDeg { get; set; }
+
     // Temperature & Status metrics
-    public double? NacelleTemperatureCelsius { get; set; }
+    public double? GeneratorTemperatureCelsius { get; set; }
 
     public double? GearboxTemperatureCelsius { get; set; }
+
+    public double? VibrationMs2 { get; set; }
 
     public TurbineStatus Status { get; set; }
 

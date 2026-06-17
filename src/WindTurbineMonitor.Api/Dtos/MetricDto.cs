@@ -8,6 +8,10 @@ public record MetricDto(
     double? PowerOutputKw,
     double? WindSpeedMs,
     double? WindDirectionDeg,
-    double? NacelleTemperatureCelsius,
+    double? AmbientTemperatureCelsius,
+    double? NacelleDirectionDeg,
+    double? BladePitchDeg,
+    double? GeneratorTemperatureCelsius,
     double? GearboxTemperatureCelsius,
+    double? VibrationMs2,
     string Status);

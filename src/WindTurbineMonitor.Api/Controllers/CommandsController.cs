@@ -13,7 +13,11 @@ namespace WindTurbineMonitor.Api.Controllers;
 [ApiController]
 [Route("api/turbines/{turbineId}/commands")]
 [Authorize]
-public class CommandsController(AppDbContext db, IMqttClientService mqtt, ILogger<CommandsController> logger)
+public class CommandsController(
+    AppDbContext db,
+    IMqttClientService mqtt,
+    ILogger<CommandsController> logger,
+    IConfiguration configuration)
     : ControllerBase
 {
     [HttpPost]
@@ -53,18 +57,16 @@ public class CommandsController(AppDbContext db, IMqttClientService mqtt, ILogge
         db.CommandLogs.Add(commandLog);
         await db.SaveChangesAsync();
 
-        // Publish to MQTT
-        var payload = new
-        {
-            commandType = request.CommandType,
-            targetRpm = request.TargetRpm,
-            issuedAt = DateTime.UtcNow.ToString("O"),
-            issuedByUsername = request.IssuedByUsername
-        };
+        // Publish to MQTT with simulator-compatible format
+        var farmId = configuration["FarmId"] ?? "5e5789ff-d103-45f1-97bf-e8086254c02f";
+        var topic = $"farm/{farmId}/windmill/{turbineId}/command";
 
-        var topic = $"fsiot/windturbines/{turbineId}/commands";
-        await mqtt.PublishAsync(topic, JsonSerializer.Serialize(payload));
-        logger.LogInformation("Published command {Type} to {Topic}", request.CommandType, topic);
+        var command = BuildMqttCommand(commandType, request.TargetRpm, request.Reason);
+        var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+        var payload = JsonSerializer.Serialize(command, jsonOptions);
+
+        await mqtt.PublishAsync(topic, payload);
+        logger.LogInformation("Published command {Type} to {Topic} with payload {Payload}", request.CommandType, topic, payload);
 
         // Update status to Executed
         commandLog.Status = CommandStatus.Executed;
@@ -105,4 +107,24 @@ public class CommandsController(AppDbContext db, IMqttClientService mqtt, ILogge
         catch { }
         return null;
     }
+
+    private static object BuildMqttCommand(CommandType commandType, double? targetRpm, string? reason)
+    {
+        return commandType switch
+        {
+            CommandType.Start => new { action = "start" },
+            CommandType.Stop => string.IsNullOrEmpty(reason)
+                ? new { action = "stop" }
+                : new { action = "stop", reason },
+            CommandType.SetTargetRpm => new { action = "setInterval", value = (int?)(targetRpm ?? 30) },
+            CommandType.EmergencyStop => new { action = "stop", reason = "Emergency stop triggered" },
+            _ => new { action = "start" }
+        };
+    }
 }
+
+public record IssueCommandRequest(
+    string CommandType,
+    double? TargetRpm = null,
+    string? IssuedByUsername = null,
+    string? Reason = null);

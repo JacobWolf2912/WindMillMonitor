@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Mqtt.Controllers;
 using WindTurbineMonitor.Api.Data;
+using WindTurbineMonitor.Api.Dtos;
 using WindTurbineMonitor.Api.Models;
 using WindTurbineMonitor.Api.Models.Enums;
 using WindTurbineMonitor.Api.Mqtt.Payloads;
@@ -10,7 +11,10 @@ namespace WindTurbineMonitor.Api.Mqtt.Controllers;
 
 public class TurbineMetricsController(
     IServiceScopeFactory scopeFactory,
-    ILogger<TurbineMetricsController> logger) : MqttController
+    ILogger<TurbineMetricsController> logger,
+    MetricBroadcaster metricBroadcaster,
+    AlertBroadcaster alertBroadcaster,
+    AlertEvaluationService alertEvaluationService) : MqttController
 {
     private const string FarmId = "5e5789ff-d103-45f1-97bf-e8086254c02f";
 
@@ -40,13 +44,43 @@ public class TurbineMetricsController(
                 PowerOutputKw = payload.PowerOutput,
                 WindSpeedMs = payload.WindSpeed,
                 WindDirectionDeg = payload.WindDirection,
-                NacelleTemperatureCelsius = payload.AmbientTemperature,
+                AmbientTemperatureCelsius = payload.AmbientTemperature,
+                NacelleDirectionDeg = payload.NacelleDirection,
+                BladePitchDeg = payload.BladePitch,
+                GeneratorTemperatureCelsius = payload.GeneratorTemp,
                 GearboxTemperatureCelsius = payload.GearboxTemp,
+                VibrationMs2 = payload.Vibration,
                 Status = ParseStatus(payload.Status) ?? TurbineStatus.Online
             };
             db.TurbineMetrics.Add(metric);
             await db.SaveChangesAsync();
             logger.LogInformation("Persisted telemetry from {TurbineName}", turbine.Name);
+
+            // Broadcast metric to SSE subscribers
+            var metricDto = new MetricDto(
+                metric.Id, metric.TurbineId, metric.Timestamp,
+                metric.RotorRpm, metric.PowerOutputKw,
+                metric.WindSpeedMs, metric.WindDirectionDeg,
+                metric.AmbientTemperatureCelsius, metric.NacelleDirectionDeg, metric.BladePitchDeg,
+                metric.GeneratorTemperatureCelsius, metric.GearboxTemperatureCelsius, metric.VibrationMs2,
+                metric.Status.ToString());
+            await metricBroadcaster.PublishAsync(turbineId, metricDto);
+
+            // Evaluate alerts and broadcast them
+            var alerts = alertEvaluationService.Evaluate(turbineId, payload);
+            foreach (var alert in alerts)
+            {
+                db.Alerts.Add(alert);
+                var alertDto = new AlertDto(
+                    0, alert.TurbineId, alert.Timestamp,
+                    alert.Severity.ToString(), alert.Title, alert.Description,
+                    false, null);
+                await alertBroadcaster.PublishAsync(alertDto);
+            }
+            if (alerts.Any())
+            {
+                await db.SaveChangesAsync();
+            }
         }
         catch (Exception ex)
         {
